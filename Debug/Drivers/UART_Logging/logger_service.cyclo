@@ -1,0 +1,2 @@
+../Drivers/UART_Logging/logger_service.c:37:6:LoggerInit	3
+../Drivers/UART_Logging/logger_service.c:59:6:LoggerData	6

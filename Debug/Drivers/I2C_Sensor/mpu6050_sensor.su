@@ -1,0 +1,2 @@
+../Drivers/I2C_Sensor/mpu6050_sensor.c:40:19:MpuSensorInit	40	static
+../Drivers/I2C_Sensor/mpu6050_sensor.c:68:19:MpuSensorAcquireRaw	40	static

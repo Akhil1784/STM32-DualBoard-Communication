@@ -1,0 +1,4 @@
+../Drivers/OS_Execution/sensorTask_manager.c:54:13:Step_I2C_Reader	1
+../Drivers/OS_Execution/sensorTask_manager.c:69:13:Step_Data_Processor	1
+../Drivers/OS_Execution/sensorTask_manager.c:105:13:Step_UART_Sender	2
+../Drivers/OS_Execution/sensorTask_manager.c:138:6:SensorTask	4
