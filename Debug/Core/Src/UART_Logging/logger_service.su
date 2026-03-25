@@ -1,0 +1,2 @@
+../Core/Src/UART_Logging/logger_service.c:37:6:LoggerInit	24	static
+../Core/Src/UART_Logging/logger_service.c:59:6:LoggerData	32	static

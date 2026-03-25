@@ -34,7 +34,8 @@
 //Return  : bool      - true if initialization is successful; false if
 //                      pointers are NULL.
 //*****************************************************************************
-bool LoggerInit(Logger_Config_t* const pstConfig, UART_HandleTypeDef* const phUart)
+bool LoggerInit(Logger_Config_t* const pstConfig, UART_HandleTypeDef* 
+                                                                  const phUart)
 {
     bool bRetVal = false;
 
@@ -56,7 +57,8 @@ bool LoggerInit(Logger_Config_t* const pstConfig, UART_HandleTypeDef* const phUa
 //Outputs : None (Data sent over hardware pins).
 //Return  : bool      - true if HAL_UART_Transmit returns HAL_OK; else false.
 //*****************************************************************************
-bool LoggerData(Logger_Config_t* const pstConfig, const char* pcBuffer, uint16_t unLength)
+bool LoggerData(Logger_Config_t* const pstConfig, const char* pcBuffer, 
+                                                             uint16_t unLength)
 {
     bool bStatus = false;
     HAL_StatusTypeDef enHalStatus;

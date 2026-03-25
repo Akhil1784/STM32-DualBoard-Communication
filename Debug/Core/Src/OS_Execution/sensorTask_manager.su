@@ -1,0 +1,4 @@
+../Core/Src/OS_Execution/sensorTask_manager.c:54:13:Step_I2C_Reader	16	static
+../Core/Src/OS_Execution/sensorTask_manager.c:69:13:Step_Data_Processor	32	static
+../Core/Src/OS_Execution/sensorTask_manager.c:105:13:Step_UART_Sender	192	static
+../Core/Src/OS_Execution/sensorTask_manager.c:138:6:SensorTask	24	static

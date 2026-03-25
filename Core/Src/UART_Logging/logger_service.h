@@ -36,9 +36,10 @@ typedef struct _LOGGER_CONFIG_
 } Logger_Config_t;
 
 //***************************** Forward Declarations **************************
-bool LoggerInit(Logger_Config_t* const pstConfig, UART_HandleTypeDef* const phUart);
-
-bool LoggerData(Logger_Config_t* const pstConfig, const char* pcBuffer, uint16 unLength);
+bool LoggerInit(Logger_Config_t* const pstConfig,
+                                             UART_HandleTypeDef* const phUart);
+bool LoggerData(Logger_Config_t* const pstConfig, const char* pcBuffer, 
+                                                              uint16 unLength);
 
 #endif // LOGGER_SERVICE_H
 

@@ -4,11 +4,10 @@
 //*****************************************************************************
 //
 // File    : mpu6050_sensor.c
-// Summary : Implementation of MPU6050 sensor initialization and data acquisition.
+// Summary : Implementation of MPU6050 sensor initialization and acquisition.
 // Note    : Adheres to Trenser Embedded Coding Standard V1.0.
 //
 //*****************************************************************************
-
 //******************************* Include Files *******************************
 #include "mpu6050_sensor.h"
 
@@ -37,7 +36,8 @@ typedef uint8_t uint8;
 //Outputs : pstMpuDevice - Updated with I2C handle and address.
 //Return  : HAL_StatusTypeDef - Result of the I2C write operation.
 //*****************************************************************************
-HAL_StatusTypeDef MpuSensorInit(MPU6050_DEVICE* const pstMpuDevice, I2C_HandleTypeDef* const phHi2c)
+HAL_StatusTypeDef MpuSensorInit(MPU6050_DEVICE* const pstMpuDevice, 
+                                               I2C_HandleTypeDef* const phHi2c)
 {
     uint8 ucWakeupData = WAKEUP_VALUE;
     HAL_StatusTypeDef enStatus = HAL_ERROR;

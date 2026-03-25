@@ -22,13 +22,13 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+Core/Src/I2C_Sensor \
+Core/Src/OS_Execution \
+Core/Src/UART_Logging \
 Core/Src \
 Core/Startup \
 Drivers/BSP/STM32U5xx_Nucleo \
-Drivers/I2C_Sensor \
-Drivers/OS_Execution \
 Drivers/STM32U5xx_HAL_Driver/Src \
-Drivers/UART_Logging \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
 Middlewares/Third_Party/FreeRTOS/Source \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure \

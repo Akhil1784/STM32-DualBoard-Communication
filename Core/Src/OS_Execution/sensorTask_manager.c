@@ -74,14 +74,14 @@ static bool Step_Data_Processor(void)
     float fYZSumSq;
 
     /* Combine High and Low Bytes for 16-bit signed integers */
-    g_stAccelNode.nAx = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf[IDX_ACCEL_X_H] << BIT_SHIFT_8) |
-                                             g_stAccelNode.aucRawBuf[IDX_ACCEL_X_L]);
+    g_stAccelNode.nAx = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf
+     [IDX_ACCEL_X_H] << BIT_SHIFT_8) | g_stAccelNode.aucRawBuf[IDX_ACCEL_X_L]);
 
-    g_stAccelNode.nAy = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf[IDX_ACCEL_Y_H] << BIT_SHIFT_8) |
-                                             g_stAccelNode.aucRawBuf[IDX_ACCEL_Y_L]);
+    g_stAccelNode.nAy = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf
+     [IDX_ACCEL_Y_H] << BIT_SHIFT_8) | g_stAccelNode.aucRawBuf[IDX_ACCEL_Y_L]);
 
-    g_stAccelNode.nAz = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf[IDX_ACCEL_Z_H] << BIT_SHIFT_8) |
-                                             g_stAccelNode.aucRawBuf[IDX_ACCEL_Z_L]);
+    g_stAccelNode.nAz = (int16_t)(((uint16_t)g_stAccelNode.aucRawBuf
+     [IDX_ACCEL_Z_H] << BIT_SHIFT_8) | g_stAccelNode.aucRawBuf[IDX_ACCEL_Z_L]);
 
     fAxG = (float)g_stAccelNode.nAx / ACCEL_SENSITIVITY;
     fAyG = (float)g_stAccelNode.nAy / ACCEL_SENSITIVITY;

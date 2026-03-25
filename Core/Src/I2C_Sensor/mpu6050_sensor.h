@@ -43,7 +43,8 @@ typedef struct _MPU6050_DEVICE_
 } MPU6050_DEVICE;
 
 //***************************** Forward Declarations **************************
-HAL_StatusTypeDef MpuSensorInit(MPU6050_DEVICE* const pstMpuDevice, I2C_HandleTypeDef* const phHi2c);
+HAL_StatusTypeDef MpuSensorInit(MPU6050_DEVICE* const pstMpuDevice,
+                                              I2C_HandleTypeDef* const phHi2c);
 HAL_StatusTypeDef MpuSensorAcquireRaw(MPU6050_DEVICE* const pstMpuDevice);
 
 #endif // MPU6050_SENSOR_H

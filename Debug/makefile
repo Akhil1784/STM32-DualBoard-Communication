@@ -13,12 +13,12 @@ RM := rm -rf
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
--include Drivers/UART_Logging/subdir.mk
 -include Drivers/STM32U5xx_HAL_Driver/Src/subdir.mk
--include Drivers/OS_Execution/subdir.mk
--include Drivers/I2C_Sensor/subdir.mk
 -include Drivers/BSP/STM32U5xx_Nucleo/subdir.mk
 -include Core/Startup/subdir.mk
+-include Core/Src/UART_Logging/subdir.mk
+-include Core/Src/OS_Execution/subdir.mk
+-include Core/Src/I2C_Sensor/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
 
