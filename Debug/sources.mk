@@ -22,9 +22,10 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
-Core/Src/I2C_Sensor \
+Core/Src/Data_Processor \
+Core/Src/I2C_Reader \
 Core/Src/OS_Execution \
-Core/Src/UART_Logging \
+Core/Src/UART_Tx \
 Core/Src \
 Core/Startup \
 Drivers/BSP/STM32U5xx_Nucleo \

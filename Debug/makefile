@@ -16,9 +16,10 @@ RM := rm -rf
 -include Drivers/STM32U5xx_HAL_Driver/Src/subdir.mk
 -include Drivers/BSP/STM32U5xx_Nucleo/subdir.mk
 -include Core/Startup/subdir.mk
--include Core/Src/UART_Logging/subdir.mk
+-include Core/Src/UART_Tx/subdir.mk
 -include Core/Src/OS_Execution/subdir.mk
--include Core/Src/I2C_Sensor/subdir.mk
+-include Core/Src/I2C_Reader/subdir.mk
+-include Core/Src/Data_Processor/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
 

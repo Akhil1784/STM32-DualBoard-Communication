@@ -22,8 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "mpu6050_sensor.h"
-#include "logger_service.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +47,10 @@ I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+osMutexId_t g_mtxSensorDataHandle;
+const osMutexAttr_t mtxSensorData_attributes = {
+  .name = "mtxSensorData"
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -106,14 +108,13 @@ int main(void)
   MX_ICACHE_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
+
   /* USER CODE BEGIN 2 */
   const osThreadAttr_t sensorTask_attributes = {
         .name = "SensorTask",
         .stack_size = 1024U,
         .priority = (osPriority_t) osPriorityNormal,
     };
-
-    //extern void SensorTask(void *argument);
 
     osThreadId_t sensorTask_handle = osThreadNew(SensorTask, NULL, &sensorTask_attributes);
 

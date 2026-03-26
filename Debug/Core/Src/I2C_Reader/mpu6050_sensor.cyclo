@@ -1,0 +1,3 @@
+../Core/Src/I2C_Reader/mpu6050_sensor.c:40:19:MpuSensorInit	3
+../Core/Src/I2C_Reader/mpu6050_sensor.c:68:19:MpuSensorAcquireRaw	2
+../Core/Src/I2C_Reader/mpu6050_sensor.c:93:6:I2CReader	3
