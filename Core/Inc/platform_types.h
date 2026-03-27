@@ -1,28 +1,22 @@
 //*****************************************************************************
-// Copyright (c) 2026 Trenser
-// All Rights Reserved
+//  Copyright (c) 2026 Trenser
+//  All Rights Reserved
 //*****************************************************************************
 //
-// File    : uart_transmitter.h
-// Summary : Prototypes and constants for UART transmission and logging.
+// Summary : Platform specific data type definitions.
+// Note    : Standardized for Trenser Coding Standard V1.0.
 //
 //*****************************************************************************
 
-#ifndef UART_TRANSMITTER_H
-#define UART_TRANSMITTER_H
+#ifndef PLATFORM_TYPES_H
+#define PLATFORM_TYPES_H
 
 //******************************* Include Files *******************************
-#include "sensor_service.h"
-#include "main.h"
 #include <stdbool.h>
-#include <stdint.h>
 
-//******************************** Global Types *******************************
+//******************************* Global Types ********************************
 
 //***************************** Global Constants ******************************
-#define TX_PACKET_BUF_SIZE    128U
-#define UART_TX_TIMEOUT_MS    100U
-#define TX_TASK_DELAY_MS      100U
 
 //***************************** Local Constants *******************************
 
@@ -31,13 +25,16 @@
 //****************************** Local Variables ******************************
 
 //***************************** Type Definitions ******************************
+typedef unsigned char  uint8;
+typedef unsigned short uint16;
+typedef unsigned long  uint32;
+typedef signed char    int8;
+typedef signed short   int16;
+typedef signed long    int32;
 
-//*************************** Forward Declarations *****************************
+//**************************** Forward Declarations ***************************
 
-//******************************.FUNCTION_HEADER.******************************
-bool UartTxSendLog(UART_HandleTypeDef* const phUart, MPU6050_DEVICE* const pstDevice);
-void UartTxTask(void* pvArgument);
-
-#endif // UART_TRANSMITTER_H
+#endif /* PLATFORM_TYPES_H */
 
 //******************************** End of File ********************************
+

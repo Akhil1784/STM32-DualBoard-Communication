@@ -1,3 +1,0 @@
-../Core/Src/UART_Tx/uart_transmitter.c:38:6:LoggerInit	3
-../Core/Src/UART_Tx/uart_transmitter.c:60:6:LoggerData	6
-../Core/Src/UART_Tx/uart_transmitter.c:92:6:UartTransmitter	4

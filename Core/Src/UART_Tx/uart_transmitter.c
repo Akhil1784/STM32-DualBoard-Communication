@@ -1,117 +1,88 @@
 //*****************************************************************************
-//  Copyright (c) 2026 Trenser
-//  All Rights Reserved
+// Copyright (c) 2026 Trenser
+// All Rights Reserved
 //*****************************************************************************
 //
 // File    : uart_transmitter.c
-// Summary : Implementation of data formatting and UART transmission.
-// Note    : Adheres to Trenser Embedded Coding Standard V1.0.
+// Summary : Implementation of UART logging task and transmission logic.
 //
 //*****************************************************************************
 
 //******************************* Include Files *******************************
 #include "uart_transmitter.h"
+#include "os_layer.h"
 #include <stdio.h>
-#include <string.h>
 
-//******************************* Global Types ********************************
+//******************************** Global Types *******************************
 
 //***************************** Global Constants ******************************
 
 //***************************** Local Constants *******************************
-#define DEFAULT_UART_TIMEOUT_MS    10U
-#define EMPTY_BUFFER_SIZE          0U
-#define PACKET_BUF_SIZE            128U
 
 //***************************** Global Variables ******************************
+extern UART_HandleTypeDef huart1;
+extern osMutexId_t gpMtxDataProtect;
+extern MPU6050_DEVICE gstMpuNode;
+
+//****************************** Local Variables ******************************
 
 //***************************** Type Definitions ******************************
 
-//******************************.FUNCTION_HEADER.******************************
-//Purpose : Initializes the logger configuration structure with the UART handle.
-//Inputs  : pstConfig - Pointer to the logger configuration structure.
-//          phUart    - Pointer to the HAL UART hardware handle.
-//Outputs : pstConfig - Updated with UART handle and default timeout.
-//Return  : bool      - true if initialization is successful; false if
-//                      pointers are NULL.
-//*****************************************************************************
-bool LoggerInit(Logger_Config_t* const pstConfig, UART_HandleTypeDef* const phUart)
-{
-    bool bRetVal = false;
-
-    if ((NULL != pstConfig) && (NULL != phUart))
-    {
-        pstConfig->phUart      = phUart;
-        pstConfig->unTimeoutMs = DEFAULT_UART_TIMEOUT_MS;
-        bRetVal                = true;
-    }
-
-    return bRetVal;
-}
+//*************************** Forward Declarations ****************************
 
 //******************************.FUNCTION_HEADER.******************************
-//Purpose : Transmits a raw character buffer over the configured UART interface.
-//Inputs  : pstConfig - Pointer to the logger configuration structure.
-//          pcBuffer  - Pointer to the data buffer to be transmitted.
-//          unLength  - Number of bytes to transmit.
-//Outputs : None      - Data is shifted out via UART hardware pins.
-//Return  : bool      - true if HAL_UART_Transmit returns HAL_OK; else false.
+//Purpose : Formats and transmits sensor data via UART.
+//Inputs  : phUart - Pointer to UART handle.
+//          pstDevice - Pointer to MPU device structure.
+//Outputs : Data shifted out via UART hardware pins.
+//Return  : bool - true if transmission successful.
 //*****************************************************************************
-bool LoggerData(Logger_Config_t* const pstConfig, const char* pcBuffer, uint16 unLength)
+bool UartTxSendLog(UART_HandleTypeDef* const phUart, MPU6050_DEVICE* const pstDevice)
 {
-    bool bStatus = false;
-    HAL_StatusTypeDef enHalStatus;
+    char aucMessageBuffer[TX_PACKET_BUF_SIZE];
+    int  nLength = 0;
+    bool blStatus = false;
 
-    if ((NULL != pstConfig) && (NULL != pstConfig->phUart) &&
-        (NULL != pcBuffer)  && (unLength > EMPTY_BUFFER_SIZE))
+    if ((NULL != phUart) && (NULL != pstDevice))
     {
-        enHalStatus = HAL_UART_Transmit(pstConfig->phUart,
-                                        (uint8_t*)pcBuffer,
-                                        unLength,
-                                        pstConfig->unTimeoutMs);
+        nLength = snprintf(aucMessageBuffer, sizeof(aucMessageBuffer),
+                           "[LOG] AX:%d, AY:%d, AZ:%d, P:%.2f, R:%.2f\r\n",
+                           pstDevice->nAx, pstDevice->nAy, pstDevice->nAz,
+                           pstDevice->fPitch, pstDevice->fRoll);
 
-        if (HAL_OK == enHalStatus)
+        if (nLength > 0)
         {
-            bStatus = true;
+            if (HAL_OK == HAL_UART_Transmit(phUart, (uint8_t*)aucMessageBuffer,
+                                         (uint16_t)nLength, UART_TX_TIMEOUT_MS))
+            {
+                blStatus = true;
+            }
         }
     }
 
-    return bStatus;
+    return blStatus;
 }
 
 //******************************.FUNCTION_HEADER.******************************
-//Purpose : Step-level wrapper that formats processed sensor data into a
-//          log string and initiates UART transmission.
-//Inputs  : pstConfig    - Pointer to the logger configuration structure.
-//          pstMpuDevice - Pointer to the device structure containing
-//                         calculated Pitch, Roll, and Accel values.
-//Outputs : None         - Formatted string is sent to the LoggerData function.
-//Return  : bool         - true if string was formatted and sent successfully;
-//                         else false.
+//Purpose : RTOS Task entry for periodic UART transmission.
+//Inputs  : pvArgument - Task input parameter.
+//Outputs : Data transmitted via UART1 TX hardware.
+//Return  : None.
 //*****************************************************************************
-bool UartTransmitter(Logger_Config_t* const pstConfig, MPU6050_DEVICE* const pstMpuDevice)
+void UartTxTask(void* pvArgument)
 {
-    char acTlvPacket[PACKET_BUF_SIZE];
-    int  nLen;
-    bool bStatus = false;
+    (void) pvArgument;
 
-    if ((NULL != pstConfig) && (NULL != pstMpuDevice))
+    for (;;)
     {
-        nLen = snprintf(acTlvPacket, PACKET_BUF_SIZE,
-        		        "[LOG] AX:%d, AY:%d, AZ:%d, P:%.2f, R:%.2f\r\n",
-                        pstMpuDevice->nAx,
-                        pstMpuDevice->nAy,
-                        pstMpuDevice->nAz,
-                        pstMpuDevice->fPitch,
-                        pstMpuDevice->fRoll);
-
-        if (nLen > 0)
+        if (osOK == OS_MutexAcquire(gpMtxDataProtect, OS_WAIT_FOREVER))
         {
-            bStatus = LoggerData(pstConfig, acTlvPacket, (uint16)nLen);
+            (void) UartTxSendLog(&huart1, &gstMpuNode);
+            (void) OS_MutexRelease(gpMtxDataProtect);
         }
-    }
 
-    return bStatus;
+        osDelay(TX_TASK_DELAY_MS);
+    }
 }
 
-// EOF
+//******************************** End of File ********************************

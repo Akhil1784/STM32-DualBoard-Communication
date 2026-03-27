@@ -3,26 +3,34 @@
 // All Rights Reserved
 //*****************************************************************************
 //
-// File    : uart_transmitter.h
-// Summary : Prototypes and constants for UART transmission and logging.
+// File    : sensor_service.h
+// Summary : Prototypes and structures for MPU6050 I2C acquisition.
 //
 //*****************************************************************************
 
-#ifndef UART_TRANSMITTER_H
-#define UART_TRANSMITTER_H
+#ifndef MPU6050_SENSOR_H
+#define MPU6050_SENSOR_H
 
 //******************************* Include Files *******************************
-#include "sensor_service.h"
 #include "main.h"
-#include <stdbool.h>
+#include "platform_types.h"
 #include <stdint.h>
 
-//******************************** Global Types *******************************
-
 //***************************** Global Constants ******************************
-#define TX_PACKET_BUF_SIZE    128U
-#define UART_TX_TIMEOUT_MS    100U
-#define TX_TASK_DELAY_MS      100U
+#define RAW_BUF_SIZE             6U
+
+//******************************* Global Types ********************************
+typedef struct _MPU6050_DEVICE_
+{
+    I2C_HandleTypeDef* phHi2c;
+    uint16 unDevAddr;
+    uint8 aucRawBuf[RAW_BUF_SIZE];
+    int16 nAx;
+    int16 nAy;
+    int16 nAz;
+    float fPitch;
+    float fRoll;
+} MPU6050_DEVICE;
 
 //***************************** Local Constants *******************************
 
@@ -35,9 +43,11 @@
 //*************************** Forward Declarations *****************************
 
 //******************************.FUNCTION_HEADER.******************************
-bool UartTxSendLog(UART_HandleTypeDef* const phUart, MPU6050_DEVICE* const pstDevice);
-void UartTxTask(void* pvArgument);
+bool SensorReadInit(I2C_HandleTypeDef* const phI2c, MPU6050_DEVICE* const pstDevice);
+bool SensorReadAcquire(MPU6050_DEVICE* const pstDevice);
+void SensorReadTask(void* pvArgument);
 
-#endif // UART_TRANSMITTER_H
+#endif /* MPU6050_SENSOR_H */
 
 //******************************** End of File ********************************
+

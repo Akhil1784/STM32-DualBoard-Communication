@@ -1,4 +1,0 @@
-../Core/Src/OS_Execution/os_layer.c:47:13:Step_I2C_Reader	8	static
-../Core/Src/OS_Execution/os_layer.c:58:13:Step_Data_Processor	8	static
-../Core/Src/OS_Execution/os_layer.c:69:13:Step_UART_Sender	8	static
-../Core/Src/OS_Execution/os_layer.c:87:6:SensorTask	24	static

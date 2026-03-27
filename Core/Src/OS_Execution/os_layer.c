@@ -1,122 +1,136 @@
 //*****************************************************************************
-//  Copyright (c) 2026 Trenser
-//  All Rights Reserved
+// Copyright (c) 2026 Trenser
+// All Rights Reserved
 //*****************************************************************************
 //
 // File    : os_layer.c
-// Summary : OS Task management for sensor acquisition and processing.
-// Note    : This file acts ONLY as the workflow orchestrator.
+// Summary : Implementation of OS initialization and Task Table .
 //
 //*****************************************************************************
 
 //******************************* Include Files *******************************
-#include "main.h"
-#include "cmsis_os2.h"
-#include "mpu6050_sensor.h"
+#include "sensor_service.h"
+#include "os_layer.h"
 #include "processor_service.h"
 #include "uart_transmitter.h"
 
-//******************************* Global Types *******************************
+//***************************** Local Constants *******************************
+#define SENSOR_STACK_SIZE     1024U
+#define PROCESS_STACK_SIZE    1024U
+#define UART_TX_STACK_SIZE    1024U
 
 //***************************** Global Constants ******************************
-
-//***************************** Local Constants *******************************
-#define WORKFLOW_STEPS          3U
-#define ERR_LED_DELAY_MS        100U
-#define TASK_DELAY_MS           20U
-#define INIT_STEP_IDX           0U
+#define NUM_TASKS (sizeof(gstTaskTable) / sizeof(OS_TASK_CONFIG))
 
 //***************************** Global Variables ******************************
+MPU6050_DEVICE gstMpuNode;
+osMutexId_t    gpMtxDataProtect;
 
-//***************************** Local Variables *******************************
-extern I2C_HandleTypeDef hi2c1;
-extern UART_HandleTypeDef huart1;
-
-static MPU6050_DEVICE  g_stAccelNode;
-static Logger_Config_t g_stBoardTxLogger;
+//****************************** Local Variables ******************************
 
 //***************************** Type Definitions ******************************
-typedef bool (*Workflow_Fn)(void);
 
-//******************************.FUNCTION_HEADER.******************************
-//Purpose : Wrapper for the I2C acquisition step.
-//Inputs  : None (Uses global g_stAccelNode).
-//Outputs : g_stAccelNode - Raw buffer updated.
-//Return  : bool - true if acquisition successful; else false.
-//*****************************************************************************
-static bool Step_I2C_Reader(void)
+//***************************** Task Table ************************************
+static const OS_TASK_CONFIG gstTaskTable[] =
 {
-    return I2CReader(&g_stAccelNode);
-}
-
-//******************************.FUNCTION_HEADER.******************************
-//Purpose : Wrapper for the data processing step.
-//Inputs  : None (Uses global g_stAccelNode).
-//Outputs : g_stAccelNode - Pitch, Roll, and Integers calculated.
-//Return  : bool - true if processing successful; else false.
-//*****************************************************************************
-static bool Step_Data_Processor(void)
-{
-    return DataProcessor(&g_stAccelNode);
-}
-
-//******************************.FUNCTION_HEADER.******************************
-//Purpose : Wrapper for the UART transmission step.
-//Inputs  : None (Uses global g_stBoardTxLogger and g_stAccelNode).
-//Outputs : None - Data sent to UART hardware.
-//Return  : bool - true if transmission successful; else false.
-//*****************************************************************************
-static bool Step_UART_Sender(void)
-{
-    return UartTransmitter(&g_stBoardTxLogger, &g_stAccelNode);
-}
-
-static const Workflow_Fn g_fnBoard1Workflow[WORKFLOW_STEPS] =
-{
-    Step_I2C_Reader,
-    Step_Data_Processor,
-    Step_UART_Sender
+    {
+        "SensorRead",  SensorReadTask,  osPriorityHigh,   SENSOR_STACK_SIZE
+    },
+    {
+        "DataProcess", DataProcessTask, osPriorityNormal, PROCESS_STACK_SIZE
+    },
+    {
+        "UartTx",      UartTxTask,      osPriorityLow,    UART_TX_STACK_SIZE
+    }
 };
 
 //******************************.FUNCTION_HEADER.******************************
-//Purpose : Primary Thread Entry Point. Initialization and Workflow execution.
-//Inputs  : argument - Standard FreeRTOS task argument (unused).
-//Outputs : GPIO PB14 (Red LED) - Indicates error status.
-//Return  : None (Infinite Loop).
+//Purpose : Initializes the OS kernel and creates internal OS objects.
+//Inputs  : None.
+//Outputs : Mutex created, Tasks initialized in Kernel.
+//Return  : None.
 //*****************************************************************************
-void SensorTask(void *argument)
+void OS_Initialize(void)
 {
-    uint8_t ucStepIdx = INIT_STEP_IDX;
-    bool bSensorReady;
-    bool bLoggerReady;
-    bool bStepSuccess;
+    uint32 ulIndex = 0U;
 
-    bSensorReady = (HAL_OK == MpuSensorInit(&g_stAccelNode, &hi2c1));
-    bLoggerReady = LoggerInit(&g_stBoardTxLogger, &huart1);
+    osKernelInitialize();
+    gpMtxDataProtect = OS_MutexCreate("DataMtx");
 
-    if ((false == bSensorReady) || (false == bLoggerReady))
+    for (ulIndex = 0; ulIndex < NUM_TASKS; ulIndex++)
     {
-        for(;;)
-        {
-            HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
-            osDelay(ERR_LED_DELAY_MS);
-        }
-    }
-
-    for(;;)
-    {
-        bStepSuccess = g_fnBoard1Workflow[ucStepIdx]();
-
-        if (true == bStepSuccess)
-        {
-            ucStepIdx = (uint8_t)((ucStepIdx + 1U) % WORKFLOW_STEPS);
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-        }
-        else
-        {
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-        }
-
-        osDelay(TASK_DELAY_MS);
+        (void) OS_TaskCreate(&gstTaskTable[ulIndex]);
     }
 }
+
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : Starts the RTOS scheduler.
+//Inputs  : None.
+//Outputs : Control handed to RTOS.
+//Return  : None.
+//*****************************************************************************
+void OS_StartScheduler(void)
+{
+    osKernelStart();
+}
+
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : Wrapper to create a CMSIS-RTOS2 thread.
+//Inputs  : pstConfig - Pointer to the task configuration structure.
+//Outputs : Thread created in OS.
+//Return  : osThreadId_t - The ID of the created thread.
+//*****************************************************************************
+osThreadId_t OS_TaskCreate(const OS_TASK_CONFIG* const pstConfig)
+{
+    osThreadAttr_t stAttr =
+    {
+        0U
+    };
+
+    stAttr.name       = pstConfig->pcName;
+    stAttr.stack_size = pstConfig->ulStackSize;
+    stAttr.priority   = pstConfig->enPriority;
+
+    return osThreadNew(pstConfig->pFunc, NULL, &stAttr);
+}
+
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : Wrapper to create a recursive mutex.
+//Inputs  : pcName - Pointer to the mutex name string.
+//Outputs : Mutex object created.
+//Return  : osMutexId_t - ID of the created mutex.
+//*****************************************************************************
+osMutexId_t OS_MutexCreate(const char* pcName)
+{
+    const osMutexAttr_t stMtxAttr =
+    {
+        .name = pcName,
+        .attr_bits = osMutexRecursive
+    };
+
+    return osMutexNew(&stMtxAttr);
+}
+
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : Wrapper to acquire a mutex.
+//Inputs  : id - Mutex ID, ulTimeout - Time to wait.
+//Outputs : Mutex ownership updated.
+//Return  : osStatus_t - Operation status.
+//*****************************************************************************
+osStatus_t OS_MutexAcquire(osMutexId_t id, uint32 ulTimeout)
+{
+    return osMutexAcquire(id, ulTimeout);
+}
+
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : Wrapper to release a mutex.
+//Inputs  : id - Mutex ID.
+//Outputs : Mutex ownership released.
+//Return  : osStatus_t - Operation status.
+//*****************************************************************************
+osStatus_t OS_MutexRelease(osMutexId_t id)
+{
+    return osMutexRelease(id);
+}
+
+//******************************** End of File ********************************

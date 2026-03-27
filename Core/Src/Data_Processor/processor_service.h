@@ -1,11 +1,10 @@
 //*****************************************************************************
-//  Copyright (c) 2026 Trenser
-//  All Rights Reserved
+// Copyright (c) 2026 Trenser
+// All Rights Reserved
 //*****************************************************************************
 //
 // File    : processor_service.h
-// Summary : Header file for Data Processor.
-// Note    : Adheres to Trenser Embedded Coding Standard V1.0.
+// Summary : Prototypes and constants for MPU6050 data processing logic.
 //
 //*****************************************************************************
 
@@ -13,23 +12,29 @@
 #define PROCESSOR_SERVICE_H
 
 //******************************* Include Files *******************************
-#include "mpu6050_sensor.h"
-#include <stdbool.h>
-
-//******************************* Global Types *******************************
+#include "sensor_service.h"
+#include "main.h"
+#include "platform_types.h"
+#include <stdint.h>
 
 //***************************** Global Constants ******************************
 
-//***************************** Local Constants *******************************
+//******************************* Global Types ********************************
 
+//***************************** Local Constants *******************************
 
 //***************************** Global Variables ******************************
 
+//****************************** Local Variables ******************************
+
 //***************************** Type Definitions ******************************
 
-//***************************** Forward Declarations **************************
-bool DataProcessor(MPU6050_DEVICE* const pstMpuDevice);
+//*************************** Forward Declarations ****************************
+
+//******************************.FUNCTION_HEADER.******************************
+bool DataProcessExecute(MPU6050_DEVICE* const pstDevice);
+void DataProcessTask(void* pvArgument);
 
 #endif // PROCESSOR_SERVICE_H
 
-// EOF
+//******************************** End of File ********************************

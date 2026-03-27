@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "os_layer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,10 +47,7 @@ I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-osMutexId_t g_mtxSensorDataHandle;
-const osMutexAttr_t mtxSensorData_attributes = {
-  .name = "mtxSensorData"
-};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,7 +59,6 @@ static void MX_ICACHE_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-void SensorTask(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -110,17 +106,8 @@ int main(void)
   MX_I2C1_Init();
 
   /* USER CODE BEGIN 2 */
-  const osThreadAttr_t sensorTask_attributes = {
-        .name = "SensorTask",
-        .stack_size = 1024U,
-        .priority = (osPriority_t) osPriorityNormal,
-    };
-
-    osThreadId_t sensorTask_handle = osThreadNew(SensorTask, NULL, &sensorTask_attributes);
-
-    if (sensorTask_handle == NULL) {
-        Error_Handler();
-    }
+  OS_Initialize();
+  OS_StartScheduler();
   /* USER CODE END 2 */
 
 

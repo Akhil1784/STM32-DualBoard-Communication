@@ -3,26 +3,31 @@
 // All Rights Reserved
 //*****************************************************************************
 //
-// File    : uart_transmitter.h
-// Summary : Prototypes and constants for UART transmission and logging.
+// File    : os_layer.h
+// Summary : Prototypes and type definitions for the OS Abstraction Layer.
 //
 //*****************************************************************************
 
-#ifndef UART_TRANSMITTER_H
-#define UART_TRANSMITTER_H
+#ifndef OS_LAYER_H
+#define OS_LAYER_H
 
 //******************************* Include Files *******************************
-#include "sensor_service.h"
 #include "main.h"
-#include <stdbool.h>
-#include <stdint.h>
-
-//******************************** Global Types *******************************
+#include "cmsis_os2.h"
+#include "platform_types.h"
 
 //***************************** Global Constants ******************************
-#define TX_PACKET_BUF_SIZE    128U
-#define UART_TX_TIMEOUT_MS    100U
-#define TX_TASK_DELAY_MS      100U
+#define OS_WAIT_FOREVER    osWaitForever
+#define OS_NO_WAIT         0U
+
+//******************************* Global Types ********************************
+typedef struct _OS_TASK_CONFIG_
+{
+    const char* pcName;
+    osThreadFunc_t pFunc;
+    osPriority_t enPriority;
+    uint32 ulStackSize;
+} OS_TASK_CONFIG;
 
 //***************************** Local Constants *******************************
 
@@ -32,12 +37,15 @@
 
 //***************************** Type Definitions ******************************
 
-//*************************** Forward Declarations *****************************
+//*************************** Forward Declarations ****************************
+void OS_Initialize(void);
+void OS_StartScheduler(void);
+osThreadId_t OS_TaskCreate(const OS_TASK_CONFIG* const pstConfig);
+osMutexId_t OS_MutexCreate(const char* pcName);
+osStatus_t OS_MutexAcquire(osMutexId_t id, uint32 ulTimeout);
+osStatus_t OS_MutexRelease(osMutexId_t id);
 
-//******************************.FUNCTION_HEADER.******************************
-bool UartTxSendLog(UART_HandleTypeDef* const phUart, MPU6050_DEVICE* const pstDevice);
-void UartTxTask(void* pvArgument);
-
-#endif // UART_TRANSMITTER_H
+#endif // OS_LAYER_H
 
 //******************************** End of File ********************************
+

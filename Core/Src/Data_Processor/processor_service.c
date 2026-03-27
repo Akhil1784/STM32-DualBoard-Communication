@@ -1,76 +1,103 @@
 //*****************************************************************************
-//  Copyright (c) 2026 Trenser
-//  All Rights Reserved
+// Copyright (c) 2026 Trenser
+// All Rights Reserved
 //*****************************************************************************
 //
 // File    : processor_service.c
-// Summary : Implementation of MPU6050 data conversion and math logic.
-// Note    : Adheres to Trenser Embedded Coding Standard V1.0.
+// Summary : Implementation of math logic and RTOS task for data processing.
 //
 //*****************************************************************************
 
 //******************************* Include Files *******************************
 #include "processor_service.h"
+#include "os_layer.h"
 #include <math.h>
-
-//******************************* Global Types *******************************
 
 //***************************** Global Constants ******************************
 
+//******************************* Global Types ********************************
+
 //***************************** Local Constants *******************************
-#define RAD_TO_DEG              57.2957795f
-#define ACCEL_SENSITIVITY       16384.0f
-#define BIT_SHIFT_8             8U
-#define IDX_ACCEL_X_H           0U
-#define IDX_ACCEL_X_L           1U
-#define IDX_ACCEL_Y_H           2U
-#define IDX_ACCEL_Y_L           3U
-#define IDX_ACCEL_Z_H           4U
-#define IDX_ACCEL_Z_L           5U
+#define RAD_TO_DEG_CONST      57.2957f
+#define BIT_SHIFT_EIGHT       8U
+#define DATA_INDEX_ZERO       0U
+#define DATA_INDEX_ONE        1U
+#define DATA_INDEX_TWO        2U
+#define DATA_INDEX_THREE      3U
+#define DATA_INDEX_FOUR       4U
+#define DATA_INDEX_FIVE       5U
+#define PROCESS_TASK_DELAY    20U
 
 //***************************** Global Variables ******************************
+extern osMutexId_t     gpMtxDataProtect;
+extern MPU6050_DEVICE  gstMpuNode;
+
+//****************************** Local Variables ******************************
 
 //***************************** Type Definitions ******************************
 
+//*************************** Forward Declarations ****************************
+
 //******************************.FUNCTION_HEADER.******************************
-//Purpose : Converts raw byte pairs into signed 16-bit integers and
-//          calculates Pitch and Roll using trigonometry.
-//Inputs  : pstMpuDevice - Pointer to the device structure containing raw data.
-//Outputs : pstMpuDevice - Updated nAx, nAy, nAz, fPitch, and fRoll.
-//Return  : bool         - true if processing is successful; else false.
+//Purpose : Performs math calculations to convert raw bytes to Pitch and Roll.
+//Inputs  : pstDevice - Pointer to MPU device structure containing raw data.
+//Outputs : Members nAx, nAy, nAz, fPitch, and fRoll of pstDevice are updated.
+//Return  : bool - true if processing is successful, false otherwise.
 //*****************************************************************************
-bool DataProcessor(MPU6050_DEVICE* const pstMpuDevice)
+bool DataProcessExecute(MPU6050_DEVICE* const pstDevice)
 {
-    float fAxG;
-    float fAyG;
-    float fAzG;
-    float fYZSumSq;
-    bool  bStatus = false;
+    bool  blStatus = false;
+    float fYZSumSq = 0.0f;
 
-    if (NULL != pstMpuDevice)
+    if (NULL != pstDevice)
     {
-        pstMpuDevice->nAx = (int16_t)(((uint16_t)pstMpuDevice->aucRawBuf[IDX_ACCEL_X_H] << BIT_SHIFT_8) |
-                                                 pstMpuDevice->aucRawBuf[IDX_ACCEL_X_L]);
+        pstDevice->nAx = (int16)((pstDevice->aucRawBuf[DATA_INDEX_ZERO] <<
+                                  BIT_SHIFT_EIGHT) |
+                                  pstDevice->aucRawBuf[DATA_INDEX_ONE]);
 
-        pstMpuDevice->nAy = (int16_t)(((uint16_t)pstMpuDevice->aucRawBuf[IDX_ACCEL_Y_H] << BIT_SHIFT_8) |
-                                                 pstMpuDevice->aucRawBuf[IDX_ACCEL_Y_L]);
+        pstDevice->nAy = (int16)((pstDevice->aucRawBuf[DATA_INDEX_TWO] <<
+                                  BIT_SHIFT_EIGHT) |
+                                  pstDevice->aucRawBuf[DATA_INDEX_THREE]);
 
-        pstMpuDevice->nAz = (int16_t)(((uint16_t)pstMpuDevice->aucRawBuf[IDX_ACCEL_Z_H] << BIT_SHIFT_8) |
-                                                 pstMpuDevice->aucRawBuf[IDX_ACCEL_Z_L]);
+        pstDevice->nAz = (int16)((pstDevice->aucRawBuf[DATA_INDEX_FOUR] <<
+                                  BIT_SHIFT_EIGHT) |
+                                  pstDevice->aucRawBuf[DATA_INDEX_FIVE]);
 
-        fAxG = (float)pstMpuDevice->nAx / ACCEL_SENSITIVITY;
-        fAyG = (float)pstMpuDevice->nAy / ACCEL_SENSITIVITY;
-        fAzG = (float)pstMpuDevice->nAz / ACCEL_SENSITIVITY;
+        pstDevice->fRoll = atan2f((float)pstDevice->nAy,
+                                  (float)pstDevice->nAz) * RAD_TO_DEG_CONST;
 
-        pstMpuDevice->fRoll  = atan2f(fAyG, fAzG) * RAD_TO_DEG;
+        fYZSumSq = ((float)pstDevice->nAy * (float)pstDevice->nAy) +
+                   ((float)pstDevice->nAz * (float)pstDevice->nAz);
 
-        fYZSumSq = (fAyG * fAyG) + (fAzG * fAzG);
-        pstMpuDevice->fPitch = atan2f(-fAxG, sqrtf(fYZSumSq)) * RAD_TO_DEG;
+        pstDevice->fPitch = atan2f(-(float)pstDevice->nAx,
+                                    sqrtf(fYZSumSq)) * RAD_TO_DEG_CONST;
 
-        bStatus = true;
+        blStatus = true;
     }
 
-    return bStatus;
+    return blStatus;
 }
 
-// EOF
+//******************************.FUNCTION_HEADER.******************************
+//Purpose : RTOS Task entry for periodic data processing.
+//Inputs  : pvArgument - Task input parameter.
+//Outputs : The global MPU structure is updated with processed data.
+//Return  : None.
+//*****************************************************************************
+void DataProcessTask(void* pvArgument)
+{
+    (void) pvArgument;
+
+    for (;;)
+    {
+        if (osOK == OS_MutexAcquire(gpMtxDataProtect, OS_WAIT_FOREVER))
+        {
+            (void) DataProcessExecute(&gstMpuNode);
+            (void) OS_MutexRelease(gpMtxDataProtect);
+        }
+
+        osDelay(PROCESS_TASK_DELAY);
+    }
+}
+
+//******************************** End of File ********************************
